@@ -18,12 +18,12 @@ router.post('/check', function(req, res, next) {
 
     C.find(sql, function(err, ress){
         console.log(err);
-        console.log(ress[0].name);
+        console.log(ress[0]);
         if(ress[0] && ress[0].name == name) {
             req.session.user = name;
             res.send({code:0, msg:'成功'});
         } else {
-            res.send({code:1, msg: '登录失败'});
+            res.send({code:1, msg: '登录失败，用户名或密码不正确'});
         }
     });
 
