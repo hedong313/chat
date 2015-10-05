@@ -7,7 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('webchat:server');
 var http = require('http');
-
+var socketHandler = require('../models/socketHandler');
 /**
  * Get port from environment and store in Express.
  */
@@ -88,3 +88,32 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
+var io = require('socket.io')(server);
+socketHandler.messageHandler(io);
+
+/*
+var list = {};
+var i = 0;
+
+io.on('connection', function(socket){
+  console.log('a user connected');
+  console.log(socket.request.session);
+
+ // list[i] = socket;
+ // i++;
+
+ // if(list[1]) {
+ //   list[1].emit('msg', 'testmsg');
+ // }
+
+ // console.log(list);
+
+});
+*/
+
+
+
+
+
+

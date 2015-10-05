@@ -12,6 +12,8 @@
       #messages li { padding: 5px 10px; }
       #messages li:nth-child(odd) { background: #eee; }
     </style>
+      <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+      <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
   </head>
   <body>
     <ul id="messages"></ul>
@@ -19,4 +21,18 @@
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
   </body>
+        <script>
+          var fromUser = '<%= fromUser %>';
+          var socket = io();
+
+          $('form').submit(function(){
+              socket.emit('private', $('#m').val());
+              $('#messages').append($('<li>').text(fromUser+'说:'+$('#m').val()));
+              $('#m').val('');
+              return false;
+          });
+          socket.on('private', function(msg){
+              $('#messages').append($('<li>').text(msg));
+          });
+        </script>
 </html>

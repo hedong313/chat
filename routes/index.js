@@ -6,10 +6,10 @@ router.get('/', function(req, res, next) {
 
     if(!req.session.user) {
         res.redirect('/login/login');
+    } else {
+
+        res.render('index.html', { title: '首页', fromUser: req.session.user});
     }
-
-  res.render('index', { title: '首页' });
-
 });
 
 

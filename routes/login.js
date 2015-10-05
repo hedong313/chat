@@ -17,8 +17,6 @@ router.post('/check', function(req, res, next) {
     var flag = false;
 
     C.find(sql, function(err, ress){
-        console.log(err);
-        console.log(ress[0]);
         if(ress[0] && ress[0].name == name) {
             req.session.user = name;
             res.send({code:0, msg:'成功'});
