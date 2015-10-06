@@ -29,14 +29,15 @@
 <div class="container">
 
     <form class="form-signin" action="/" method="post" autocomplete="on" onsubmit="return check_login()">
-        <h2 class="form-signin-heading">请登录 或<a href="/login/reg">注册</a></h2>
+        <h2 class="form-signin-heading">注册</h2>
 
         <label for="inputName" class="sr-only">用户名</label>
         <input type="name" id="inputName" class="form-control" placeholder="用户名" oninvalid="setCustomValidity('请输入用户名')" oninput="setCustomValidity('')" required autofocus>
         <label for="inputPassword" class="sr-only">密码</label>
         <input type="password" id="inputPassword" class="form-control" placeholder="密码" oninvalid="setCustomValidity('请输入密码')" oninput="setCustomValidity('')" required>
-        <label for="inputCode" class="sr-only">Code</label>
-        <button class="btn btn-lg btn-primary btn-block" type="submit" style="margin-top: 20px;">确认</button>
+        <label for="inputPassword" class="sr-only">确认密码</label>
+        <input type="password" id="rePassword" class="form-control" placeholder="确认密码" oninvalid="setCustomValidity('请输入确认密码')" oninput="setCustomValidity('')" required>
+        <button class="btn btn-lg btn-primary btn-block" type="submit" style="margin-top: 20px;">注册</button>
         <p class="tips" style="display:none;"></p>
     </form>
 
@@ -45,14 +46,20 @@
         function check_login() {
             var name = $('#inputName').val();
             var password = $('#inputPassword').val();
-
-            var url = '/login/check';
+            var rePassword = $('#rePassword').val();
+            if(password != rePassword) {
+                alert('确认密码和密码不一致');
+                return false;
+            }
+            var url = '/login/doReg';
             $.post(url,{'name':name,'password':password},function(data){
                 if(data.code == '1') {
                     $('.tips').html(data.msg).show();
                 } else {
                     $('.tips').html(data.msg).show();
-                    location.href = '/';
+                    setTimeout(function(){
+                        location.href = '/';
+                    }, 2000);
                 }
             },'json');
             return false;
