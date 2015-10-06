@@ -25,7 +25,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({secret: '1234567890QWERTY',resave:false,saveUninitialized:false}));
+var sessionStore = new session.MemoryStore({reapInterval: 60000 * 10});
+app.use(session({secret: '1234567890QWERTY',resave:false,saveUninitialized:false,store:sessionStore,name:'sid'}));
 
 app.use('/', routes);
 app.use('/login', login);
@@ -60,5 +61,9 @@ app.use(function(err, req, res, next) {
     error: {}
   });
 });
+
+app.getSessionStore = function() {
+    return sessionStore;
+}
 
 module.exports = app;

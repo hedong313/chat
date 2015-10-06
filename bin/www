@@ -89,8 +89,9 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
+var sessionStore = app.getSessionStore();
 var io = require('socket.io')(server);
-socketHandler.messageHandler(io);
+socketHandler.messageHandler(io, sessionStore);
 
 /*
 var list = {};

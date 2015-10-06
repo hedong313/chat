@@ -6,7 +6,7 @@
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font: 13px Helvetica, Arial; }
       form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form input { border: 0; padding: 10px; width: 79%; margin-right: .5%; }
       form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages li { padding: 5px 10px; }
@@ -18,21 +18,44 @@
   <body>
     <ul id="messages"></ul>
     <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
+      <input id="m" autocomplete="off" />
+       <span style="color:white;">To： </span>
+      <select  id="send_to">
+        <option value="0">所有人</option>
+          <% if (userList.length) { %>
+              <% userList.forEach(function(user){ %>
+              <option value="<%= user.user_id%>"><%= user.name %></option>
+              <% }) %>
+          <% } %>
+      </select>
+      <button>Send</button>
     </form>
   </body>
         <script>
           var fromUser = '<%= fromUser %>';
           var socket = io();
+          socket.on('error', function(err, status){
+                alert('身份认证出错，请重新登录');
+                setTimeout(function(){location.href = '/login/login';}, 1000)
+          });
 
           $('form').submit(function(){
-              socket.emit('private', $('#m').val());
-              $('#messages').append($('<li>').text(fromUser+'说:'+$('#m').val()));
+              if(!$('#m').val()) {
+                  alert('请输入内容');
+                  return false;
+              }
+              socket.emit('private', {fromUser:fromUser,toUser: $('#send_to').val(), msg:$('#m').val()});
+              $('#messages').append($('<li>').text('我说：'+$('#m').val()));
               $('#m').val('');
               return false;
           });
-          socket.on('private', function(msg){
-              $('#messages').append($('<li>').text(msg));
+          socket.on('private', function(data){
+              $('#messages').append($('<li>').text(data.fromUser+'说：'+data.msg));
+          });
+          socket.on('broadcast', function(data){
+              if(data.fromUser != fromUser) {
+                $('#messages').append($('<li>').text(data.fromUser+'说：'+data.msg));
+              }
           });
         </script>
 </html>
