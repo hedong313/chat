@@ -19,8 +19,6 @@ function messageHandler(io, sessionSotre) {
     var nowUser = '';
 
     io.set('authorization', function (handshakeData, callback) {
-//        console.log(handshakeData.headers.cookie);
-//        console.log(cookie.parse(decodeURIComponent(handshakeData.headers.cookie)).sid);
         if (!handshakeData.headers.cookie)
         {
             return callback('no found cookie', false);
