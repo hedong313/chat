@@ -1,0 +1,214 @@
+1.1	NODEJS包管理设计
+本系统主要开发语言为Nodejs，Nodejs提供了大量的扩展包，使系统开发变的简单。所以包的管理不得不说。
+本系统采用nodejs自带的包管理工具NPM，如你需要安装Nodejs的框架包Express则可以使用npm install express命令来安装。然后就可以在任意文件下使用require(‘express’);来引用Express包。但这仅仅是安装，如果想把这些包维护起来则需要命令npm install –save express 这样系统会自动生成一个package.json的文件，文件中记录了你刚刚安装的Express及其版本号。当然你也可以手动去创建这样一个文件，（具体的格式这里就不赘述了）然后用npm install 命令就可以自动安装package.json中的所有包。
+		你可以在github上获取到本系统的源码https://github.com/hedong313/chat.git，在系统的目录中直接用npm install 就可以把系统的引用包安装好了。
+		下面是本系统package.json文件的内容截图：
+ 
+
+
+
+4.1	 系统所需主要功能包介绍及安装
+4.1.1	Express框架
+Npm install –save express
+4.1.2	Socket.io
+Npm install –save socket.io
+4.1.3	express-session
+npm install express-session
+4.1.4	Mysql
+ 这里需要注意的是需要安装mysql 2.0.0-alpha9这个版本的
+npm install mysql@2.0.0-alpha9
+4.2	系统目录树简介
+ 
+4.3	主服务器入口
+核心代码（由于使用Express框架创建一个web服务器是很简单的）：
+var express = require('express');
+var app = express();
+var server = http.createServer(app);
+server.listen(3000);   //这里是用的3000端口，也可以不写用web服务器默认的80端口
+4.4	Socket.io服务器
+Socket服务器是建立在上面所创建的web服务器的基础上的，核心代码如下：
+var io = require('socket.io')(server);
+io.on(‘connection’, function(socket){
+	…..
+});
+4.5	系统路由划分
+本系统主要有首页，登录页面，注册页面，登录提交入口，注册提交入口这写路由。定义代码分别为：
+首页
+var express = require('express');
+var router = express.Router();
+router.get('/', function(req, res, next) {
+	…
+}
+登录页
+router.get('/login', function(req, res, next) {
+	…
+}
+登录提交入口
+router.post('/check', function(req, res, next) {
+	...
+}
+注册页
+router.get('/reg', function(req, res, next) {
+	…
+}
+注册提交入口
+router.post('/doReg', function(req, res, next){
+	…
+}
+4.6	数据库操作封装
+var db = require('./database');
+var Conn = function() {};
+
+Conn.prototype.find = function(sql, callback) {
+    // get a connection from the pool
+    db.pool.getConnection(function(err, connection) {
+        if (err) {
+            console.log('fatal error:'+err);
+            callback(true);
+            return;
+        }
+        // make the query
+        connection.query(sql, function(err, results) {
+            if (err) {
+                callback(true);
+                return;
+            }
+            callback(false, results);
+        });
+    });
+};
+4.7	核心代码
+4.7.1	登录，注册
+登录
+router.post('/check', function(req, res, next) {
+
+    var name = req.param('name');
+    var password = req.param('password');
+    var sql = "select * from user where name='"+name+"' and password = '"+password+"'";
+    var C = new Conn();
+    var flag = false;
+
+    C.find(sql, function(err, ress){
+        if(ress[0] && ress[0].name == name) {
+            req.session.user = name;
+            req.session.user_id = ress[0].user_id;
+            res.send({code:0, msg:'成功'});
+        } else {
+            res.send({code:1, msg: '登录失败，用户名或密码不正确'});
+        }
+    });
+
+});
+注册
+router.post('/doReg', function(req, res, next){
+
+    var name = req.param('name');
+    var password = req.param('password');
+    var sql = "select * from user where name='"+name+"'";
+    var C = new Conn();
+    var flag = false;
+
+    C.find(sql, function(err, ress){
+        if(ress[0] && ress[0].name) {
+            res.send({code:1, msg:'该用户名已经存在，请更换一个'});
+        } else {
+
+            var sql2 = "INSERT INTO `user`" +"(`name`,`password`,`add_time`) VALUES ('"+name+"','"+password+"',now())";
+
+            C.find(sql2, function(err2, ress2){
+                if(err2) {
+                    console.log(sql2);
+                    console.log(err2);
+                    res.send({code:0, msg: '注册失败'});
+                } else {
+                    res.send({code:0, msg: '注册成功,请登录'});
+                }
+            });
+        }
+    });
+});
+4.7.2	Socket连接身份认证
+    io.set('authorization', function (handshakeData, callback) {
+        if (!handshakeData.headers.cookie)
+        {
+            return callback('no found cookie', false);
+        }
+        if(!cookie.parse(decodeURIComponent(handshakeData.headers.cookie)).sid) {
+            return callback('no found sid', false);
+        }
+        var connect_sid = cookie.parse(decodeURIComponent(handshakeData.headers.cookie)).sid.split('.')[0].split(':')[1];
+        console.log("connect_sid:" + connect_sid);
+        if (connect_sid)
+        {
+            sessionSotre.get(connect_sid, function (error, session)
+            {
+                if (error)
+                {
+                    console.log("session:" + session);
+                    callback(error.message, false);
+                } else {
+//                    console.log(session);
+                    handshakeData.session = session;
+                    if(!handshakeData.session) {
+                        console.log('no session');
+                        callback('no session', false);
+                    } else if(!handshakeData.session.user) {
+                        console.log('not login');
+                        callback('not login', false);
+                    } else {
+                        nowUser = handshakeData.session.user_id;
+                        callback(null, true);
+                    }
+                }
+            });
+        }
+        else
+        {
+            callback('nosession');
+        }
+    });
+4.7.3	信息发送和接收
+服务端
+    io.on('connection', function(socket) {
+        socketList[nowUser] = socket;
+        console.log(socket.id+' connected');
+        socket.on('private', function(data) {
+            console.log(data);
+            if(data.toUser == '0') {
+                io.emit('broadcast', data);
+            } else if(nowUser == data.toUser) {
+                //发送给自己
+
+            }else if(socketList[data.toUser]) {
+                socketList[data.toUser].emit('private', data);
+            }
+        });
+});
+客户端
+        <script>
+          var fromUser = '<%= fromUser %>';
+          var socket = io();
+          socket.on('error', function(err, status){
+                alert('身份认证出错，请重新登录');
+                setTimeout(function(){location.href = '/login/login';}, 1000)
+          });
+
+          $('form').submit(function(){
+              if(!$('#m').val()) {
+                  alert('请输入内容');
+                  return false;
+              }
+              socket.emit('private', {fromUser:fromUser,toUser: $('#send_to').val(), msg:$('#m').val()});
+              $('#messages').append($('<li>').text('我说：'+$('#m').val()));
+              $('#m').val('');
+              return false;
+          });
+          socket.on('private', function(data){
+              $('#messages').append($('<li>').text(data.fromUser+'说：'+data.msg));
+          });
+          socket.on('broadcast', function(data){
+              if(data.fromUser != fromUser) {
+                $('#messages').append($('<li>').text(data.fromUser+'说：'+data.msg));
+              }
+          });
+        </script>
