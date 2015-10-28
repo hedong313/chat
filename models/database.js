@@ -10,7 +10,8 @@ var pool = mysql.createPool({
     password: '',
     database:'webchat',
     connectionLimit: 10,
-    supportBigNumbers: true
+    supportBigNumbers: true,
+    charset: 'utf8'
 });
 
 exports.pool = pool;

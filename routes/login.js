@@ -17,7 +17,7 @@ router.post('/check', function(req, res, next) {
     var flag = false;
 
     C.find(sql, function(err, ress){
-        if(ress[0] && ress[0].name == name) {
+        if(ress.length > 0 && ress[0].name == name) {
             req.session.user = name;
             req.session.user_id = ress[0].user_id;
             res.send({code:0, msg:'成功'});
@@ -43,7 +43,8 @@ router.post('/doReg', function(req, res, next){
     var flag = false;
 
     C.find(sql, function(err, ress){
-        if(ress[0] && ress[0].name) {
+        console.log(ress);
+        if(ress.length > 0 && ress[0].name) {
             res.send({code:1, msg:'该用户名已经存在，请更换一个'});
         } else {
 
